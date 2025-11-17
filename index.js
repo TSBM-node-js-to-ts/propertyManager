@@ -1,11 +1,14 @@
 const express = require('express');
 const app = express();
 const port = 3000;
+const cors = require('cors');
 
 const { sequelize } =require('./models'); // 1. DB 연결 객체 가져오기
 
 const propertyRoutes = require('./routes/Properties');
 const customerRoutes = require('./routes/customers');
+
+app.use(cors());
 
 app.use(express.json());
 
