@@ -4,6 +4,9 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:3000/api';
 
+// -------------------------------------------------------------------
+// [1] 로그인 & 회원가입 컴포넌트
+// -------------------------------------------------------------------
 function Login({ onLogin }) {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
@@ -35,7 +38,6 @@ function Login({ onLogin }) {
       <div style={{ width: 350, padding: 30, border: '1px solid #ddd', borderRadius: 10, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
         <h2 style={{ textAlign: 'center', color: '#333' }}>🏢 부동산 매물 관리</h2>
         
-        {/* 탭 메뉴 */}
         <div style={{ display: 'flex', borderBottom: '1px solid #eee', marginBottom: 20 }}>
           <div onClick={() => setIsLoginMode(true)} style={{ flex: 1, padding: 10, textAlign: 'center', cursor: 'pointer', fontWeight: isLoginMode ? 'bold' : 'normal', borderBottom: isLoginMode ? '2px solid #007bff' : 'none', color: isLoginMode ? '#007bff' : '#888' }}>로그인</div>
           <div onClick={() => setIsLoginMode(false)} style={{ flex: 1, padding: 10, textAlign: 'center', cursor: 'pointer', fontWeight: !isLoginMode ? 'bold' : 'normal', borderBottom: !isLoginMode ? '2px solid #007bff' : 'none', color: !isLoginMode ? '#007bff' : '#888' }}>회원가입</div>
@@ -62,6 +64,9 @@ function Login({ onLogin }) {
   );
 }
 
+// -------------------------------------------------------------------
+// [2] 매물 상세 페이지
+// -------------------------------------------------------------------
 function PropertyDetail() {
   const { id } = useParams();
   const [prop, setProp] = useState(null);
@@ -73,8 +78,13 @@ function PropertyDetail() {
 
   if (!prop) return <div style={{padding:30}}>⏳ 매물 정보를 불러오는 중...</div>;
 
-  // 지도 링크 (주소 기반 자동 생성)
-  const mapUrl = `https://map.kakao.com/link/search/${prop.address}`;
+  // ★ 지도 링크 처리: 사용자가 직접 입력한 링크가 있으면 그걸 쓰고, 없으면 주소로 검색
+  const mapUrl = prop.mapUrl || `https://map.kakao.com/link/search/${prop.address}`;
+
+  // ★ 이미지 에러 처리 함수
+  const handleImageError = (e) => {
+    e.target.src = 'https://via.placeholder.com/400x300?text=No+Image'; // 깨진 이미지 대신 회색 박스 표시
+  };
 
   return (
     <div style={{ maxWidth: 900, margin: '20px auto', padding: 20, fontFamily: 'sans-serif' }}>
@@ -88,7 +98,6 @@ function PropertyDetail() {
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-          {/* 왼쪽: 상세 정보 */}
           <div style={{ flex: 1, minWidth: 300, padding: 20, borderRight: '1px solid #eee' }}>
             <h3>💰 가격 정보</h3>
             <table style={{ width: '100%', marginBottom: 20 }}>
@@ -111,17 +120,21 @@ function PropertyDetail() {
             </div>
           </div>
 
-          {/* 오른쪽: 지도 및 미디어 */}
           <div style={{ flex: 1, minWidth: 300, padding: 20, background: '#fdfdfd' }}>
             <h3>🗺 위치 및 문서</h3>
             <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-               <button onClick={() => window.open(mapUrl, '_blank')} style={{...btnStyle, marginTop:0, background:'#fae100', color:'black'}}>📍 카카오맵 보기</button>
+               <button onClick={() => window.open(mapUrl, '_blank')} style={{...btnStyle, marginTop:0, background:'#fae100', color:'black'}}>📍 카카오맵/지도 보기</button>
                {prop.contractLink && <button onClick={() => window.open(prop.contractLink, '_blank')} style={{...btnStyle, marginTop:0, background:'#28a745'}}>📄 계약서 보기</button>}
             </div>
             
-            <div style={{ height: 300, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+            <div style={{ height: 300, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, overflow:'hidden' }}>
                {prop.photoLink ? 
-                 <img src={prop.photoLink} alt="매물 사진" style={{maxWidth:'100%', maxHeight:'100%'}} /> :
+                 <img 
+                    src={prop.photoLink} 
+                    onError={handleImageError} 
+                    alt="매물 사진" 
+                    style={{width:'100%', height:'100%', objectFit:'cover'}} 
+                 /> :
                  <span style={{color:'#999'}}>등록된 사진 없음</span>
                }
             </div>
@@ -132,18 +145,20 @@ function PropertyDetail() {
   );
 }
 
+// -------------------------------------------------------------------
+// [3] 메인 화면
+// -------------------------------------------------------------------
 function Home({ user, onLogout }) {
   const [properties, setProperties] = useState([]);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
-  // 상세 입력 폼 상태
   const [form, setForm] = useState({
     type: '원룸', address: '', roomNumber: '', builtYear: '', 
     areaGeneral: '', areaPrivate: '', rooms: 1,
     priceSale: '', priceDeposit: '', priceMonth: '', pricePremium: '',
     ownerPhone: '', tenantName: '', tenantPhone: '',
-    options: [], photoLink: '', contractLink: ''
+    options: [], photoLink: '', contractLink: '', mapUrl: '' // mapUrl 추가
   });
 
   const optionList = ['에어컨','세탁기','냉장고','가스레인지','인덕션','전자레인지','침대','옷장','TV','책상'];
@@ -156,7 +171,6 @@ function Home({ user, onLogout }) {
   };
 
   const handleSearch = () => {
-    // "우리집" 검색 시 바로 이동
     if (search === '우리집') {
         if(properties.length > 0) navigate(`/detail/${properties[0].id}`);
         else alert('등록된 매물이 없습니다.');
@@ -176,7 +190,6 @@ function Home({ user, onLogout }) {
     }
   };
 
-  // 체크박스 핸들러
   const handleOptionCheck = (opt) => {
     if (form.options.includes(opt)) {
       setForm({...form, options: form.options.filter(o => o !== opt)});
@@ -188,7 +201,6 @@ function Home({ user, onLogout }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try { 
-      // 배열인 options를 문자열로 변환하여 전송
       const payload = { ...form, options: form.options.join(',') };
       await axios.post(`${API_URL}/properties`, payload);
       alert('매물 등록 완료!');
@@ -210,7 +222,6 @@ function Home({ user, onLogout }) {
         <button onClick={onLogout} style={{ padding: '8px 15px', cursor: 'pointer' }}>로그아웃</button>
       </header>
 
-      {/* 검색 */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 30 }}>
         <input 
           placeholder="주소 또는 '우리집' 검색" 
@@ -222,12 +233,11 @@ function Home({ user, onLogout }) {
 
       <div style={{ display: 'flex', gap: 40 }}>
         
-        {/* 왼쪽: 매물 등록 폼 */}
+        {/* 등록 폼 */}
         <div style={{ flex: 1, background: '#f9f9f9', padding: 20, borderRadius: 10, height: 'fit-content' }}>
           <h3 style={{ marginTop: 0 }}>📝 새 매물 기록</h3>
           <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 10 }}>
             
-            {/* 1. 매물 종류 체크 */}
             <div style={{ marginBottom: 10 }}>
               {['원룸','투룸','상가','사무실','토지','기타'].map(t => (
                 <label key={t} style={{ marginRight: 10, cursor: 'pointer' }}>
@@ -236,21 +246,18 @@ function Home({ user, onLogout }) {
               ))}
             </div>
 
-            {/* 2. 주소 및 기본정보 */}
-            <input name="address" placeholder="주소 (예: 노고산동 107-17)" value={form.address} onChange={handleChange} style={inputStyle} required />
+            <input name="address" placeholder="주소 (필수)" value={form.address} onChange={handleChange} style={inputStyle} required />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <input name="roomNumber" placeholder="호수 (예: 201호)" value={form.roomNumber} onChange={handleChange} style={inputStyle} />
-              <input name="builtYear" placeholder="준공년도 (예: 2018)" type="number" value={form.builtYear} onChange={handleChange} style={inputStyle} />
+              <input name="builtYear" placeholder="준공년도" type="number" value={form.builtYear} onChange={handleChange} style={inputStyle} />
             </div>
 
-            {/* 3. 면적 및 방 개수 */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
               <input name="areaGeneral" placeholder="공급평수" type="number" value={form.areaGeneral} onChange={handleChange} style={inputStyle} />
               <input name="areaPrivate" placeholder="전용평수" type="number" value={form.areaPrivate} onChange={handleChange} style={inputStyle} />
               <input name="rooms" placeholder="방 개수" type="number" value={form.rooms} onChange={handleChange} style={inputStyle} />
             </div>
 
-            {/* 4. 가격 정보 */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <input name="priceSale" placeholder="매매가 (만원)" type="number" value={form.priceSale} onChange={handleChange} style={inputStyle} />
               <input name="pricePremium" placeholder="권리금 (만원)" type="number" value={form.pricePremium} onChange={handleChange} style={inputStyle} />
@@ -258,7 +265,6 @@ function Home({ user, onLogout }) {
               <input name="priceMonth" placeholder="월세 (만원)" type="number" value={form.priceMonth} onChange={handleChange} style={inputStyle} />
             </div>
 
-            {/* 5. 옵션 체크박스 */}
             <div style={{ background: 'white', padding: 10, border: '1px solid #ddd', borderRadius: 5 }}>
               <p style={{ margin: '0 0 5px 0', fontSize: 14, fontWeight: 'bold' }}>옵션 체크</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', fontSize: 13 }}>
@@ -270,22 +276,22 @@ function Home({ user, onLogout }) {
               </div>
             </div>
 
-            {/* 6. 인적 사항 */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <input name="ownerPhone" placeholder="임대인 연락처" value={form.ownerPhone} onChange={handleChange} style={inputStyle} />
               <input name="tenantName" placeholder="세입자 성함" value={form.tenantName} onChange={handleChange} style={inputStyle} />
               <input name="tenantPhone" placeholder="세입자 연락처" value={form.tenantPhone} onChange={handleChange} style={inputStyle} />
             </div>
 
-            {/* 7. 링크 */}
-            <input name="photoLink" placeholder="사진 URL (구글 드라이브 등)" value={form.photoLink} onChange={handleChange} style={inputStyle} />
+            {/* 지도 및 사진 링크 입력 */}
+            <input name="mapUrl" placeholder="지도 공유 링크 (선택: 비워두면 자동검색)" value={form.mapUrl} onChange={handleChange} style={inputStyle} />
+            <input name="photoLink" placeholder="사진 URL (.jpg/.png로 끝나는 주소 권장)" value={form.photoLink} onChange={handleChange} style={inputStyle} />
             <input name="contractLink" placeholder="계약서 링크" value={form.contractLink} onChange={handleChange} style={inputStyle} />
 
             <button type="submit" style={{...btnStyle, marginTop: 10}}>매물 저장하기</button>
           </form>
         </div>
 
-        {/* 오른쪽: 매물 목록 */}
+        {/* 목록 */}
         <div style={{ flex: 1 }}>
           <h3>📋 등록된 매물 ({properties.length}건)</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
@@ -316,7 +322,6 @@ function Home({ user, onLogout }) {
   );
 }
 
-// 공통 스타일
 const inputStyle = { width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 5, boxSizing: 'border-box' };
 const btnStyle = { width: '100%', padding: 12, background: '#007bff', color: 'white', border: 'none', borderRadius: 5, cursor: 'pointer', fontWeight: 'bold' };
 
