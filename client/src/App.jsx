@@ -4,7 +4,6 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:3000/api';
 
-
 function Login({ onLogin }) {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
@@ -41,27 +40,29 @@ function Login({ onLogin }) {
           <div onClick={() => setIsLoginMode(false)} style={{ flex: 1, padding: '15px', textAlign: 'center', cursor: 'pointer', fontWeight: !isLoginMode ? 'bold' : 'normal', borderBottom: !isLoginMode ? '3px solid #007bff' : 'none', color: !isLoginMode ? '#007bff' : '#888', marginBottom: '-2px' }}>회원가입</div>
         </div>
 
-        <input placeholder="이메일" value={email} onChange={e=>setEmail(e.target.value)} style={inputStyle} />
-        <input type="password" placeholder="비밀번호" value={password} onChange={e=>setPassword(e.target.value)} style={inputStyle} />
-        
-        {!isLoginMode && (
-          <>
-            <input placeholder="이름 (예: 홍길동)" value={name} onChange={e=>setName(e.target.value)} style={inputStyle} />
-            <select value={role} onChange={e=>setRole(e.target.value)} style={inputStyle}>
-              <option value="STAFF">직원 (일반)</option>
-              <option value="CEO">대표 (관리자)</option>
-            </select>
-          </>
-        )}
+        {/* ★ 여기 수정됨: 입력창 사이에 15px 간격 추가 */ }
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <input placeholder="이메일" value={email} onChange={e=>setEmail(e.target.value)} style={inputStyle} />
+          <input type="password" placeholder="비밀번호" value={password} onChange={e=>setPassword(e.target.value)} style={inputStyle} />
+          
+          {!isLoginMode && (
+            <>
+              <input placeholder="이름 (예: 홍길동)" value={name} onChange={e=>setName(e.target.value)} style={inputStyle} />
+              <select value={role} onChange={e=>setRole(e.target.value)} style={inputStyle}>
+                <option value="STAFF">직원 (일반)</option>
+                <option value="CEO">대표 (관리자)</option>
+              </select>
+            </>
+          )}
+        </div>
 
-        <button onClick={isLoginMode ? handleLogin : handleRegister} style={{...btnStyle, marginTop: '20px'}}>
+        <button onClick={isLoginMode ? handleLogin : handleRegister} style={{...btnStyle, marginTop: '25px'}}>
           {isLoginMode ? '로그인' : '회원가입 완료'}
         </button>
       </div>
     </div>
   );
 }
-
 
 function RegisterProperty({ user }) {
   const navigate = useNavigate();
@@ -149,7 +150,6 @@ function RegisterProperty({ user }) {
   );
 }
 
-
 function PropertyDetail() {
   const { id } = useParams();
   const [prop, setProp] = useState(null);
@@ -166,10 +166,9 @@ function PropertyDetail() {
 
   return (
     <div style={pageWrapperStyle}>
-      {/* 카드 전체 padding을 0으로 하고 내부에서 padding을 조절하여 너비를 맞춤 */}
       <div style={{ ...cardStyle, maxWidth: '800px', padding: 0 }}>
         
-        {/* 상단 헤더: 뒤로가기 버튼과 제목 */}
+        {/* 헤더 */}
         <div style={{ background: '#f8f9fa', padding: '30px', borderBottom: '1px solid #eee' }}>
           <button onClick={() => navigate(-1)} style={{ marginBottom: 15, padding: '5px 12px', cursor:'pointer', border:'1px solid #ccc', borderRadius:'6px', background:'white', fontSize:'13px' }}>← 목록으로</button>
           
@@ -180,10 +179,9 @@ function PropertyDetail() {
           </div>
         </div>
 
-        {/* 상세 정보 내용: 헤더와 동일한 패딩(30px)을 주어 라인을 맞춤 */}
+        {/* 상세 정보 */}
         <div style={{ padding: '30px' }}>
           
-          {/* 가격 정보 Box */}
           <div style={{ background: '#f0f7ff', padding: '25px', borderRadius: '12px', marginBottom: '30px', border: '1px solid #e1ecf9' }}>
               <h3 style={{marginTop:0, color:'#0056b3', marginBottom: '15px'}}>💰 가격 정보</h3>
               <div style={{ fontSize:'16px', display:'flex', flexDirection:'column', gap:'8px' }}>
@@ -203,8 +201,7 @@ function PropertyDetail() {
           </div>
 
           <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
-            {/* 왼쪽: 건물 정보 */}
-            <div style={{ flex: 1, minWidth: '300px' }}>
+            <div style={{ flex: 1, minWidth: '320px' }}>
               <h3 style={{marginTop:0, borderBottom:'2px solid #eee', paddingBottom:'10px'}}>🏠 건물 정보</h3>
               <ul style={{ listStyle: 'none', padding: 0, fontSize: '15px', lineHeight: '2' }}>
                 <li><strong>면적:</strong> 공급 {prop.areaGeneral}평 / 전용 {prop.areaPrivate}평</li>
@@ -219,8 +216,7 @@ function PropertyDetail() {
               </div>
             </div>
 
-            {/* 오른쪽: 지도 및 사진 */}
-            <div style={{ flex: 1, minWidth: '300px' }}>
+            <div style={{ flex: 1, minWidth: '320px' }}>
                <div style={{ height: '220px', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', overflow:'hidden', marginBottom:'15px', border:'1px solid #eee' }}>
                  <img src={prop.photoLink} onError={handleImageError} alt="매물 사진" style={{width:'100%', height:'100%', objectFit:'cover'}} />
                </div>
@@ -326,7 +322,6 @@ function Home({ user, onLogout }) {
   );
 }
 
-
 const pageWrapperStyle = {
   display: 'flex', justifyContent: 'center', alignItems: 'flex-start',
   minHeight: '100vh', backgroundColor: '#f5f5f5', fontFamily: 'sans-serif',
@@ -335,11 +330,9 @@ const pageWrapperStyle = {
 };
 
 const cardStyle = {
-  width: '100%', 
-  // padding은 각 컴포넌트에서 필요에 따라 개별 조정 (기본값 제거)
-  background: 'white', borderRadius: '16px',
+  width: '100%', padding: '40px', background: 'white', borderRadius: '16px',
   boxShadow: '0 4px 20px rgba(0,0,0,0.08)', margin: 'auto 0',
-  overflow: 'hidden' // 중요: 헤더 배경색이 둥근 모서리를 넘치지 않게 함
+  overflow: 'hidden'
 };
 
 const inputStyle = { width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '8px', boxSizing: 'border-box', fontSize:'14px' };
