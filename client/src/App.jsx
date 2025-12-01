@@ -4,9 +4,7 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:3000/api';
 
-// -------------------------------------------------------------------
-// [1] 로그인 & 회원가입 컴포넌트
-// -------------------------------------------------------------------
+
 function Login({ onLogin }) {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
@@ -34,13 +32,13 @@ function Login({ onLogin }) {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 80, fontFamily: 'sans-serif' }}>
-      <div style={{ width: 350, padding: 30, border: '1px solid #ddd', borderRadius: 10, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ textAlign: 'center', color: '#333' }}>🏢 부동산 매물 관리</h2>
+    <div style={pageWrapperStyle}>
+      <div style={{ ...cardStyle, maxWidth: '400px', padding: '40px' }}>
+        <h2 style={{ textAlign: 'center', color: '#333', marginBottom: '30px' }}>🏢 부동산 매물 관리</h2>
         
-        <div style={{ display: 'flex', borderBottom: '1px solid #eee', marginBottom: 20 }}>
-          <div onClick={() => setIsLoginMode(true)} style={{ flex: 1, padding: 10, textAlign: 'center', cursor: 'pointer', fontWeight: isLoginMode ? 'bold' : 'normal', borderBottom: isLoginMode ? '2px solid #007bff' : 'none', color: isLoginMode ? '#007bff' : '#888' }}>로그인</div>
-          <div onClick={() => setIsLoginMode(false)} style={{ flex: 1, padding: 10, textAlign: 'center', cursor: 'pointer', fontWeight: !isLoginMode ? 'bold' : 'normal', borderBottom: !isLoginMode ? '2px solid #007bff' : 'none', color: !isLoginMode ? '#007bff' : '#888' }}>회원가입</div>
+        <div style={{ display: 'flex', borderBottom: '2px solid #eee', marginBottom: '30px' }}>
+          <div onClick={() => setIsLoginMode(true)} style={{ flex: 1, padding: '15px', textAlign: 'center', cursor: 'pointer', fontWeight: isLoginMode ? 'bold' : 'normal', borderBottom: isLoginMode ? '3px solid #007bff' : 'none', color: isLoginMode ? '#007bff' : '#888', marginBottom: '-2px' }}>로그인</div>
+          <div onClick={() => setIsLoginMode(false)} style={{ flex: 1, padding: '15px', textAlign: 'center', cursor: 'pointer', fontWeight: !isLoginMode ? 'bold' : 'normal', borderBottom: !isLoginMode ? '3px solid #007bff' : 'none', color: !isLoginMode ? '#007bff' : '#888', marginBottom: '-2px' }}>회원가입</div>
         </div>
 
         <input placeholder="이메일" value={email} onChange={e=>setEmail(e.target.value)} style={inputStyle} />
@@ -56,7 +54,7 @@ function Login({ onLogin }) {
           </>
         )}
 
-        <button onClick={isLoginMode ? handleLogin : handleRegister} style={btnStyle}>
+        <button onClick={isLoginMode ? handleLogin : handleRegister} style={{...btnStyle, marginTop: '20px'}}>
           {isLoginMode ? '로그인' : '회원가입 완료'}
         </button>
       </div>
@@ -64,9 +62,94 @@ function Login({ onLogin }) {
   );
 }
 
-// -------------------------------------------------------------------
-// [2] 매물 상세 페이지
-// -------------------------------------------------------------------
+
+function RegisterProperty({ user }) {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    type: '원룸', address: '', roomNumber: '', builtYear: '', 
+    areaGeneral: '', areaPrivate: '', rooms: 1,
+    priceSale: '', priceDeposit: '', priceMonth: '', pricePremium: '',
+    ownerPhone: '', tenantName: '', tenantPhone: '',
+    options: [], photoLink: '', contractLink: '', mapUrl: ''
+  });
+
+  const optionList = ['에어컨','세탁기','냉장고','가스레인지','인덕션','전자레인지','침대','옷장','TV','책상'];
+
+  const handleChange = (e) => setForm({...form, [e.target.name]: e.target.value});
+  
+  const handleOptionCheck = (opt) => {
+    if (form.options.includes(opt)) setForm({...form, options: form.options.filter(o => o !== opt)});
+    else setForm({...form, options: [...form.options, opt]});
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try { 
+      const payload = { ...form, options: form.options.join(',') };
+      await axios.post(`${API_URL}/properties`, payload);
+      alert('매물 등록 완료!');
+      navigate('/');
+    } catch (e) { alert('등록 실패'); }
+  };
+
+  return (
+    <div style={pageWrapperStyle}>
+      <div style={{ ...cardStyle, maxWidth: '600px', padding: '40px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ margin: 0, color: '#007bff' }}>📝 새 매물 등록</h3>
+            <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', fontSize:'16px' }}>✕ 닫기</button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '15px' }}>
+          <div style={{ marginBottom: '10px', display:'flex', gap:'15px', flexWrap:'wrap', justifyContent:'center' }}>
+            {['원룸','투룸','상가','사무실','토지','기타'].map(t => (
+              <label key={t} style={{ cursor: 'pointer', fontSize:'14px' }}>
+                <input type="radio" name="type" value={t} checked={form.type === t} onChange={handleChange} /> {t}
+              </label>
+            ))}
+          </div>
+
+          <input name="address" placeholder="주소 (필수 입력)" value={form.address} onChange={handleChange} style={inputStyle} required />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <input name="roomNumber" placeholder="호수 (예: 201호)" value={form.roomNumber} onChange={handleChange} style={inputStyle} />
+            <input name="builtYear" placeholder="준공년도" type="number" value={form.builtYear} onChange={handleChange} style={inputStyle} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+            <input name="areaGeneral" placeholder="공급평" type="number" value={form.areaGeneral} onChange={handleChange} style={inputStyle} />
+            <input name="areaPrivate" placeholder="전용평" type="number" value={form.areaPrivate} onChange={handleChange} style={inputStyle} />
+            <input name="rooms" placeholder="방 수" type="number" value={form.rooms} onChange={handleChange} style={inputStyle} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <input name="priceSale" placeholder="매매가 (만원)" type="number" value={form.priceSale} onChange={handleChange} style={inputStyle} />
+            <input name="pricePremium" placeholder="권리금 (만원)" type="number" value={form.pricePremium} onChange={handleChange} style={inputStyle} />
+            <input name="priceDeposit" placeholder="보증금 (만원)" type="number" value={form.priceDeposit} onChange={handleChange} style={inputStyle} />
+            <input name="priceMonth" placeholder="월세 (만원)" type="number" value={form.priceMonth} onChange={handleChange} style={inputStyle} />
+          </div>
+          <div style={{ background: '#f9f9f9', padding: '15px', borderRadius: '10px' }}>
+            <p style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: 'bold', textAlign:'center' }}>옵션 선택</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap:'10px', fontSize: '13px' }}>
+              {optionList.map(opt => (
+                <label key={opt} style={{cursor:'pointer'}}><input type="checkbox" checked={form.options.includes(opt)} onChange={() => handleOptionCheck(opt)} /> {opt}</label>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+            <input name="ownerPhone" placeholder="임대인 연락처" value={form.ownerPhone} onChange={handleChange} style={inputStyle} />
+            <input name="tenantName" placeholder="세입자 성함" value={form.tenantName} onChange={handleChange} style={inputStyle} />
+            <input name="tenantPhone" placeholder="세입자 연락처" value={form.tenantPhone} onChange={handleChange} style={inputStyle} />
+          </div>
+          <input name="mapUrl" placeholder="지도 공유 링크 (선택)" value={form.mapUrl} onChange={handleChange} style={inputStyle} />
+          <input name="photoLink" placeholder="사진 URL (이미지 주소)" value={form.photoLink} onChange={handleChange} style={inputStyle} />
+          <input name="contractLink" placeholder="계약서 링크" value={form.contractLink} onChange={handleChange} style={inputStyle} />
+
+          <button type="submit" style={{...btnStyle, marginTop: '10px', fontSize:'16px'}}>매물 저장하기</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+
 function PropertyDetail() {
   const { id } = useParams();
   const [prop, setProp] = useState(null);
@@ -76,67 +159,75 @@ function PropertyDetail() {
     axios.get(`${API_URL}/properties/${id}`).then(res => setProp(res.data)).catch(()=>alert('로딩 실패'));
   }, [id]);
 
-  if (!prop) return <div style={{padding:30}}>⏳ 매물 정보를 불러오는 중...</div>;
+  if (!prop) return <div style={{padding:30, textAlign:'center'}}>⏳ 로딩중...</div>;
 
-  // ★ 지도 링크 처리: 사용자가 직접 입력한 링크가 있으면 그걸 쓰고, 없으면 주소로 검색
   const mapUrl = prop.mapUrl || `https://map.kakao.com/link/search/${prop.address}`;
-
-  // ★ 이미지 에러 처리 함수
-  const handleImageError = (e) => {
-    e.target.src = 'https://via.placeholder.com/400x300?text=No+Image'; // 깨진 이미지 대신 회색 박스 표시
-  };
+  const handleImageError = (e) => { e.target.src = 'https://via.placeholder.com/400x300?text=No+Image'; };
 
   return (
-    <div style={{ maxWidth: 900, margin: '20px auto', padding: 20, fontFamily: 'sans-serif' }}>
-      <button onClick={() => navigate(-1)} style={{ marginBottom: 15, padding: '5px 10px', cursor:'pointer' }}>← 목록으로</button>
-      
-      <div style={{ border: '1px solid #ccc', borderRadius: 10, overflow: 'hidden' }}>
-        <div style={{ background: '#f8f9fa', padding: 20, borderBottom: '1px solid #eee' }}>
-          <h1 style={{ margin: 0, fontSize: 24 }}>{prop.address} {prop.roomNumber}</h1>
-          <span style={{ background: '#007bff', color: 'white', padding: '3px 8px', borderRadius: 4, fontSize: 12, marginRight: 5 }}>{prop.type}</span>
-          <span style={{ color: '#666' }}>{prop.builtYear}년 준공</span>
+    <div style={pageWrapperStyle}>
+      {/* 카드 전체 padding을 0으로 하고 내부에서 padding을 조절하여 너비를 맞춤 */}
+      <div style={{ ...cardStyle, maxWidth: '800px', padding: 0 }}>
+        
+        {/* 상단 헤더: 뒤로가기 버튼과 제목 */}
+        <div style={{ background: '#f8f9fa', padding: '30px', borderBottom: '1px solid #eee' }}>
+          <button onClick={() => navigate(-1)} style={{ marginBottom: 15, padding: '5px 12px', cursor:'pointer', border:'1px solid #ccc', borderRadius:'6px', background:'white', fontSize:'13px' }}>← 목록으로</button>
+          
+          <h1 style={{ margin: '0 0 10px 0', fontSize: '26px' }}>{prop.address} {prop.roomNumber}</h1>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ background: '#007bff', color: 'white', padding: '5px 12px', borderRadius: '20px', fontSize: '14px', marginRight: '10px' }}>{prop.type}</span>
+            <span style={{ color: '#666', fontSize:'15px' }}>{prop.builtYear}년 준공</span>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 300, padding: 20, borderRight: '1px solid #eee' }}>
-            <h3>💰 가격 정보</h3>
-            <table style={{ width: '100%', marginBottom: 20 }}>
-              <tbody>
-                <tr><td>보증금/월세</td><td><strong>{prop.priceDeposit} / {prop.priceMonth}</strong> 만원</td></tr>
-                <tr><td>매매가</td><td>{prop.priceSale ? `${prop.priceSale} 만원` : '-'}</td></tr>
-                <tr><td>권리금</td><td>{prop.pricePremium ? `${prop.pricePremium} 만원` : '-'}</td></tr>
-              </tbody>
-            </table>
-
-            <h3>🏠 건물 정보</h3>
-            <p>면적: 공급 {prop.areaGeneral}평 / 전용 {prop.areaPrivate}평</p>
-            <p>방 개수: {prop.rooms}개</p>
-            <p>옵션: {prop.options || '없음'}</p>
-            
-            <div style={{ background: '#fff3cd', padding: 15, borderRadius: 8, marginTop: 20 }}>
-              <h4 style={{ margin: '0 0 10px 0' }}>👤 세입자 및 주인 정보 (관리자용)</h4>
-              <p>집주인: {prop.ownerPhone}</p>
-              <p>세입자: {prop.tenantName} ({prop.tenantPhone})</p>
-            </div>
+        {/* 상세 정보 내용: 헤더와 동일한 패딩(30px)을 주어 라인을 맞춤 */}
+        <div style={{ padding: '30px' }}>
+          
+          {/* 가격 정보 Box */}
+          <div style={{ background: '#f0f7ff', padding: '25px', borderRadius: '12px', marginBottom: '30px', border: '1px solid #e1ecf9' }}>
+              <h3 style={{marginTop:0, color:'#0056b3', marginBottom: '15px'}}>💰 가격 정보</h3>
+              <div style={{ fontSize:'16px', display:'flex', flexDirection:'column', gap:'8px' }}>
+                <div style={{display:'flex', justifyContent:'space-between', borderBottom:'1px dashed #cedae9', paddingBottom:'5px'}}>
+                    <span style={{color:'#555'}}>보증금 / 월세</span>
+                    <strong>{prop.priceDeposit} / {prop.priceMonth} 만원</strong>
+                </div>
+                <div style={{display:'flex', justifyContent:'space-between', borderBottom:'1px dashed #cedae9', paddingBottom:'5px'}}>
+                    <span style={{color:'#555'}}>매매가</span>
+                    <span>{prop.priceSale ? `${prop.priceSale} 만원` : '-'}</span>
+                </div>
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                    <span style={{color:'#555'}}>권리금</span>
+                    <span>{prop.pricePremium ? `${prop.pricePremium} 만원` : '-'}</span>
+                </div>
+              </div>
           </div>
 
-          <div style={{ flex: 1, minWidth: 300, padding: 20, background: '#fdfdfd' }}>
-            <h3>🗺 위치 및 문서</h3>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-               <button onClick={() => window.open(mapUrl, '_blank')} style={{...btnStyle, marginTop:0, background:'#fae100', color:'black'}}>📍 카카오맵/지도 보기</button>
-               {prop.contractLink && <button onClick={() => window.open(prop.contractLink, '_blank')} style={{...btnStyle, marginTop:0, background:'#28a745'}}>📄 계약서 보기</button>}
+          <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
+            {/* 왼쪽: 건물 정보 */}
+            <div style={{ flex: 1, minWidth: '300px' }}>
+              <h3 style={{marginTop:0, borderBottom:'2px solid #eee', paddingBottom:'10px'}}>🏠 건물 정보</h3>
+              <ul style={{ listStyle: 'none', padding: 0, fontSize: '15px', lineHeight: '2' }}>
+                <li><strong>면적:</strong> 공급 {prop.areaGeneral}평 / 전용 {prop.areaPrivate}평</li>
+                <li><strong>방 개수:</strong> {prop.rooms}개</li>
+                <li><strong>옵션:</strong> {prop.options || '없음'}</li>
+              </ul>
+              
+              <div style={{ background: '#fff8e1', padding: '20px', borderRadius: '12px', marginTop: '20px', border:'1px solid #ffeeba' }}>
+                <h4 style={{ margin: '0 0 10px 0', color:'#856404' }}>👤 관리자 전용</h4>
+                <p style={{margin:'5px 0', fontSize:'14px'}}><strong>집주인:</strong> {prop.ownerPhone}</p>
+                <p style={{margin:'5px 0', fontSize:'14px'}}><strong>세입자:</strong> {prop.tenantName} ({prop.tenantPhone})</p>
+              </div>
             </div>
-            
-            <div style={{ height: 300, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, overflow:'hidden' }}>
-               {prop.photoLink ? 
-                 <img 
-                    src={prop.photoLink} 
-                    onError={handleImageError} 
-                    alt="매물 사진" 
-                    style={{width:'100%', height:'100%', objectFit:'cover'}} 
-                 /> :
-                 <span style={{color:'#999'}}>등록된 사진 없음</span>
-               }
+
+            {/* 오른쪽: 지도 및 사진 */}
+            <div style={{ flex: 1, minWidth: '300px' }}>
+               <div style={{ height: '220px', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', overflow:'hidden', marginBottom:'15px', border:'1px solid #eee' }}>
+                 <img src={prop.photoLink} onError={handleImageError} alt="매물 사진" style={{width:'100%', height:'100%', objectFit:'cover'}} />
+               </div>
+               <div style={{ display: 'flex', gap: '10px' }}>
+                 <button onClick={() => window.open(mapUrl, '_blank')} style={{...btnStyle, flex:1, background:'#fae100', color:'#3b1e1e', border:'none', fontSize:'14px'}}>📍 지도 보기</button>
+                 {prop.contractLink && <button onClick={() => window.open(prop.contractLink, '_blank')} style={{...btnStyle, flex:1, background:'#28a745', border:'none', fontSize:'14px'}}>📄 계약서</button>}
+               </div>
             </div>
           </div>
         </div>
@@ -145,23 +236,10 @@ function PropertyDetail() {
   );
 }
 
-// -------------------------------------------------------------------
-// [3] 메인 화면
-// -------------------------------------------------------------------
 function Home({ user, onLogout }) {
   const [properties, setProperties] = useState([]);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-
-  const [form, setForm] = useState({
-    type: '원룸', address: '', roomNumber: '', builtYear: '', 
-    areaGeneral: '', areaPrivate: '', rooms: 1,
-    priceSale: '', priceDeposit: '', priceMonth: '', pricePremium: '',
-    ownerPhone: '', tenantName: '', tenantPhone: '',
-    options: [], photoLink: '', contractLink: '', mapUrl: '' // mapUrl 추가
-  });
-
-  const optionList = ['에어컨','세탁기','냉장고','가스레인지','인덕션','전자레인지','침대','옷장','TV','책상'];
 
   useEffect(() => { fetchProperties(); }, []);
 
@@ -190,131 +268,57 @@ function Home({ user, onLogout }) {
     }
   };
 
-  const handleOptionCheck = (opt) => {
-    if (form.options.includes(opt)) {
-      setForm({...form, options: form.options.filter(o => o !== opt)});
-    } else {
-      setForm({...form, options: [...form.options, opt]});
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try { 
-      const payload = { ...form, options: form.options.join(',') };
-      await axios.post(`${API_URL}/properties`, payload);
-      alert('매물 등록 완료!');
-      fetchProperties();
-    } catch (e) { alert('등록 실패'); }
-  };
-
-  const handleChange = (e) => {
-    setForm({...form, [e.target.name]: e.target.value});
-  };
-
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', padding: 20, fontFamily: 'sans-serif' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30, borderBottom: '1px solid #eee', paddingBottom: 15 }}>
-        <div>
-          <h2 style={{ margin: 0 }}>🏠 부동산 관리 시스템</h2>
-          <span style={{ color: '#666' }}>접속자: <strong>{user.name}</strong> ({user.role === 'CEO' ? '대표' : '직원'})</span>
-        </div>
-        <button onClick={onLogout} style={{ padding: '8px 15px', cursor: 'pointer' }}>로그아웃</button>
-      </header>
-
-      <div style={{ display: 'flex', gap: 10, marginBottom: 30 }}>
-        <input 
-          placeholder="주소 또는 '우리집' 검색" 
-          value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleSearch()}
-          style={{ flex: 1, padding: 12, fontSize: 16, border: '1px solid #ccc', borderRadius: 5 }} 
-        />
-        <button onClick={handleSearch} style={{ padding: '0 20px', background: '#333', color: 'white', border: 'none', borderRadius: 5, cursor: 'pointer' }}>검색</button>
-      </div>
-
-      <div style={{ display: 'flex', gap: 40 }}>
+    <div style={pageWrapperStyle}>
+      <div style={{ ...cardStyle, maxWidth: '800px', background: 'transparent', boxShadow: 'none', padding: '0' }}>
         
-        {/* 등록 폼 */}
-        <div style={{ flex: 1, background: '#f9f9f9', padding: 20, borderRadius: 10, height: 'fit-content' }}>
-          <h3 style={{ marginTop: 0 }}>📝 새 매물 기록</h3>
-          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 10 }}>
-            
-            <div style={{ marginBottom: 10 }}>
-              {['원룸','투룸','상가','사무실','토지','기타'].map(t => (
-                <label key={t} style={{ marginRight: 10, cursor: 'pointer' }}>
-                  <input type="radio" name="type" value={t} checked={form.type === t} onChange={handleChange} /> {t}
-                </label>
-              ))}
-            </div>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', background:'white', padding:'20px', borderRadius:'16px', boxShadow:'0 4px 10px rgba(0,0,0,0.05)' }}>
+          <h2 style={{ margin: 0, fontSize: '24px', color: '#333' }}>🏠 부동산 관리 시스템</h2>
+          <div style={{ display:'flex', alignItems:'center', gap:'10px'}}>
+              <span style={{ color: '#666', fontSize:'14px' }}><strong>{user.name}</strong> 님</span>
+              <button onClick={onLogout} style={{ padding: '6px 12px', cursor: 'pointer', border:'1px solid #ccc', background:'white', borderRadius:'6px' }}>로그아웃</button>
+          </div>
+        </header>
 
-            <input name="address" placeholder="주소 (필수)" value={form.address} onChange={handleChange} style={inputStyle} required />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <input name="roomNumber" placeholder="호수 (예: 201호)" value={form.roomNumber} onChange={handleChange} style={inputStyle} />
-              <input name="builtYear" placeholder="준공년도" type="number" value={form.builtYear} onChange={handleChange} style={inputStyle} />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-              <input name="areaGeneral" placeholder="공급평수" type="number" value={form.areaGeneral} onChange={handleChange} style={inputStyle} />
-              <input name="areaPrivate" placeholder="전용평수" type="number" value={form.areaPrivate} onChange={handleChange} style={inputStyle} />
-              <input name="rooms" placeholder="방 개수" type="number" value={form.rooms} onChange={handleChange} style={inputStyle} />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <input name="priceSale" placeholder="매매가 (만원)" type="number" value={form.priceSale} onChange={handleChange} style={inputStyle} />
-              <input name="pricePremium" placeholder="권리금 (만원)" type="number" value={form.pricePremium} onChange={handleChange} style={inputStyle} />
-              <input name="priceDeposit" placeholder="보증금 (만원)" type="number" value={form.priceDeposit} onChange={handleChange} style={inputStyle} />
-              <input name="priceMonth" placeholder="월세 (만원)" type="number" value={form.priceMonth} onChange={handleChange} style={inputStyle} />
-            </div>
-
-            <div style={{ background: 'white', padding: 10, border: '1px solid #ddd', borderRadius: 5 }}>
-              <p style={{ margin: '0 0 5px 0', fontSize: 14, fontWeight: 'bold' }}>옵션 체크</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', fontSize: 13 }}>
-                {optionList.map(opt => (
-                  <label key={opt} style={{ marginBottom: 5 }}>
-                    <input type="checkbox" checked={form.options.includes(opt)} onChange={() => handleOptionCheck(opt)} /> {opt}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <input name="ownerPhone" placeholder="임대인 연락처" value={form.ownerPhone} onChange={handleChange} style={inputStyle} />
-              <input name="tenantName" placeholder="세입자 성함" value={form.tenantName} onChange={handleChange} style={inputStyle} />
-              <input name="tenantPhone" placeholder="세입자 연락처" value={form.tenantPhone} onChange={handleChange} style={inputStyle} />
-            </div>
-
-            {/* 지도 및 사진 링크 입력 */}
-            <input name="mapUrl" placeholder="지도 공유 링크 (선택: 비워두면 자동검색)" value={form.mapUrl} onChange={handleChange} style={inputStyle} />
-            <input name="photoLink" placeholder="사진 URL (.jpg/.png로 끝나는 주소 권장)" value={form.photoLink} onChange={handleChange} style={inputStyle} />
-            <input name="contractLink" placeholder="계약서 링크" value={form.contractLink} onChange={handleChange} style={inputStyle} />
-
-            <button type="submit" style={{...btnStyle, marginTop: 10}}>매물 저장하기</button>
-          </form>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '30px' }}>
+            <input 
+              placeholder="주소 또는 '우리집' 검색" 
+              value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleSearch()}
+              style={{ flex: 1, padding: '15px', fontSize: '16px', border: '1px solid #ddd', borderRadius: '12px', paddingLeft:'20px', boxShadow:'0 2px 5px rgba(0,0,0,0.03)' }} 
+            />
+            <button onClick={handleSearch} style={{ padding: '0 25px', background: '#333', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize:'16px' }}>검색</button>
+            <button onClick={() => navigate('/register')} style={{ padding: '0 25px', background: '#007bff', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize:'16px', fontWeight:'bold', minWidth:'120px' }}>+ 매물 등록</button>
         </div>
 
-        {/* 목록 */}
-        <div style={{ flex: 1 }}>
-          <h3>📋 등록된 매물 ({properties.length}건)</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+        <div>
+          <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'15px'}}>
+             <span style={{fontSize:'20px'}}>📋 등록된 매물</span>
+             <span style={{background:'#eee', padding:'2px 8px', borderRadius:'10px', fontSize:'14px', fontWeight:'bold'}}>{properties.length}건</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             {properties.map(p => (
-              <div key={p.id} onClick={() => navigate(`/detail/${p.id}`)} style={{ border: '1px solid #ddd', padding: 15, borderRadius: 8, cursor: 'pointer', background: 'white', position: 'relative', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-                <h4 style={{ margin: '0 0 5px 0' }}>{p.address} {p.roomNumber}</h4>
-                <div style={{ fontSize: 14, color: '#555' }}>
-                  <span style={{ color: '#007bff', fontWeight: 'bold' }}>{p.type}</span> | {p.rooms}룸 | {p.areaPrivate}평
+              <div key={p.id} onClick={() => navigate(`/detail/${p.id}`)} style={{ border: '1px solid #fff', padding: '25px', borderRadius: '16px', cursor: 'pointer', background: 'white', position: 'relative', boxShadow: '0 4px 10px rgba(0,0,0,0.03)', transition: 'transform 0.2s' }}>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                  <h4 style={{ margin: '0 0 5px 0', fontSize:'20px', color:'#333' }}>{p.address} {p.roomNumber}</h4>
+                  <span style={{ color: '#fff', fontWeight: 'bold', background: p.type==='원룸'?'#00C851':p.type==='투룸'?'#33b5e5':'#ffbb33', padding:'4px 10px', borderRadius:'20px', fontSize:'12px' }}>{p.type}</span>
                 </div>
-                <div style={{ marginTop: 5, fontWeight: 'bold' }}>
+                <div style={{ fontSize: '14px', color: '#666', marginBottom:'12px', marginTop:'5px' }}>
+                   {p.rooms}룸 · {p.areaPrivate}평 · {p.builtYear}년식
+                </div>
+                <div style={{ fontWeight: 'bold', fontSize:'18px', color:'#000' }}>
                   {p.priceDeposit}/{p.priceMonth} {p.priceSale && `(매매 ${p.priceSale})`}
                 </div>
                 {user.role === 'CEO' && (
                   <button 
                     onClick={(e) => handleDelete(e, p.id)}
-                    style={{ position: 'absolute', top: 15, right: 15, background: '#ff4d4f', color: 'white', border: 'none', padding: '5px 10px', borderRadius: 4, cursor: 'pointer' }}
+                    style={{ position: 'absolute', top: '25px', right: '25px', background: '#ff4d4f', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize:'13px' }}
                   >
                     삭제
                   </button>
                 )}
               </div>
             ))}
-            {properties.length === 0 && <p style={{color:'#999'}}>검색 결과가 없습니다.</p>}
+            {properties.length === 0 && <p style={{color:'#999', textAlign:'center', padding:'40px', background:'white', borderRadius:'16px'}}>등록된 매물이 없습니다.</p>}
           </div>
         </div>
       </div>
@@ -322,8 +326,24 @@ function Home({ user, onLogout }) {
   );
 }
 
-const inputStyle = { width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 5, boxSizing: 'border-box' };
-const btnStyle = { width: '100%', padding: 12, background: '#007bff', color: 'white', border: 'none', borderRadius: 5, cursor: 'pointer', fontWeight: 'bold' };
+
+const pageWrapperStyle = {
+  display: 'flex', justifyContent: 'center', alignItems: 'flex-start',
+  minHeight: '100vh', backgroundColor: '#f5f5f5', fontFamily: 'sans-serif',
+  padding: '40px 20px', boxSizing: 'border-box',
+  position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflowY: 'auto'
+};
+
+const cardStyle = {
+  width: '100%', 
+  // padding은 각 컴포넌트에서 필요에 따라 개별 조정 (기본값 제거)
+  background: 'white', borderRadius: '16px',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.08)', margin: 'auto 0',
+  overflow: 'hidden' // 중요: 헤더 배경색이 둥근 모서리를 넘치지 않게 함
+};
+
+const inputStyle = { width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '8px', boxSizing: 'border-box', fontSize:'14px' };
+const btnStyle = { width: '100%', padding: '12px', background: '#007bff', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' };
 
 function App() {
   const [user, setUser] = useState(null);
@@ -331,6 +351,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={ !user ? <Login onLogin={setUser} /> : <Home user={user} onLogout={()=>setUser(null)} /> } />
+        <Route path="/register" element={ !user ? <Login onLogin={setUser} /> : <RegisterProperty user={user} /> } />
         <Route path="/detail/:id" element={ !user ? <Login onLogin={setUser} /> : <PropertyDetail /> } />
       </Routes>
     </Router>
