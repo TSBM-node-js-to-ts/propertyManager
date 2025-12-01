@@ -7,7 +7,7 @@ const { Op } = require('sequelize');
  * @swagger
  * tags:
  *   name: Properties
- *   description: 부동산 매물 관리 API
+ *   description: 부동산 매물 관리 API (상세 기능 포함)
  */
 
 /**
@@ -21,7 +21,7 @@ const { Op } = require('sequelize');
  *         name: search
  *         schema:
  *           type: string
- *         description: 주소 검색어 (예 노고산)
+ *         description: 주소 또는 건물명 검색어
  *     responses:
  *       200:
  *         description: 조회 성공
@@ -48,39 +48,9 @@ router.get('/', async (req, res) => {
 
 /**
  * @swagger
- * /api/properties/raw-sql:
- *   get:
- *     summary: 직접 짠 SQL로 검색
- *     tags: [Properties]
- *     parameters:
- *       - in: query
- *         name: keyword
- *         schema:
- *           type: string
- *         description: 검색 키워드
- *     responses:
- *       200:
- *         description: SQL 결과 반환
- */
-router.get('/raw-sql', async (req, res) => {
-    const { keyword } = req.query;
-    const query = `SELECT * FROM Properties WHERE address LIKE :searchKeyword ORDER BY id DESC`;
-    
-    try {
-        const [results] = await sequelize.query(query, {
-            replacements: { searchKeyword: `%${keyword || ''}%` }
-        });
-        res.status(200).json(results);
-    } catch (error) {
-        res.status(500).json({ message: 'SQL 에러' });
-    }
-});
-
-/**
- * @swagger
  * /api/properties:
  *   post:
- *     summary: 새 매물 등록
+ *     summary: 새 매물 상세 등록
  *     tags: [Properties]
  *     requestBody:
  *       required: true
@@ -89,18 +59,57 @@ router.get('/raw-sql', async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               address:
- *                 type: string
- *                 example: "서울시 마포구 노고산동 107-17"
  *               type:
  *                 type: string
  *                 example: "원룸"
+ *               address:
+ *                 type: string
+ *                 example: "서울시 마포구 노고산동 107-17"
+ *               roomNumber:
+ *                 type: string
+ *                 example: "201호"
+ *               builtYear:
+ *                 type: integer
+ *                 example: 2020
+ *               areaGeneral:
+ *                 type: number
+ *                 example: 15.5
+ *               areaPrivate:
+ *                 type: number
+ *                 example: 8.5
+ *               rooms:
+ *                 type: integer
+ *                 example: 1
+ *               priceSale:
+ *                 type: integer
+ *                 description: 매매가
  *               priceDeposit:
  *                 type: integer
- *                 example: 1000
+ *                 description: 보증금
  *               priceMonth:
  *                 type: integer
- *                 example: 50
+ *                 description: 월세
+ *               pricePremium:
+ *                 type: integer
+ *                 description: 권리금
+ *               ownerPhone:
+ *                 type: string
+ *                 example: "010-1234-5678"
+ *               tenantName:
+ *                 type: string
+ *                 description: 세입자 성함
+ *               tenantPhone:
+ *                 type: string
+ *                 description: 세입자 연락처
+ *               options:
+ *                 type: string
+ *                 example: "에어컨,냉장고,세탁기"
+ *               photoLink:
+ *                 type: string
+ *                 description: 사진 링크
+ *               contractLink:
+ *                 type: string
+ *                 description: 계약서 링크
  *     responses:
  *       201:
  *         description: 등록 성공
